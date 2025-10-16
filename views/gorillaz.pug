@@ -1,8 +1,8 @@
-extends layout
-
 block content
-  h1= title
+  h1 Albums de Gorillaz
   ul
     each album in albums
-      li= album.title
-    a(href='/') Retour à l'accueil
+      li
+        a(href='/album/' + album.id)= album.title
+
+  a(href='/') Retour à l'accueil

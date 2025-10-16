@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  h1= title
+  if tracks && tracks.length
+    ul
+      each track in tracks
+        li= track.title
+  else
+    p Aucune piste trouvée.
+
+  a(href='/') Retour à l'accueil
+
+  

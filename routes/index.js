@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const cowsay = require('cowsay');
-console.log(cowsay.say({text: 'Le routeur est bien créé !'}));
+console.log(cowsay.say({text: 'la congolexicomatisation des lois du marché'}));
 
 //API MusicBrainz
 //Documentation : https://musicbrainz.org/doc/Development/XML_Web_Service/Version_2
@@ -28,6 +28,8 @@ router.get('/nirvana', function(req, res, next) {
     .then(data => {
       console.log(data); //vérifier les données reçues
       res.render('nirvana', { albums: data['release-groups'] }); //passer les données à la vue
+      //afficher les musiques de chaque album dans la vue
+      
     })
     .catch(error => {
       console.error('Error fetching Nirvana data:', error);
@@ -66,5 +68,55 @@ router.get('/muse', function(req, res, next) {
       res.status(500).send('Error fetching Muse data');
     });
 });
+
+
+
+
+router.get('/album/:id', function(req, res, next) {
+  const releaseGroupId = req.params.id;
+  const RELEASE_URL = `https://musicbrainz.org/ws/2/release?release-group=${releaseGroupId}&fmt=json`;
+
+  fetch(RELEASE_URL, { headers: { 'User-Agent': 'projet_git/1.0.0 (tcollignon.74@gmail.com)' } })
+    .then(response => response.json())
+    .then(data => {
+      if (!data.releases || data.releases.length === 0) {
+        return res.status(404).send('Aucune release trouvée pour cet album.');
+      }
+
+      // On prend la première release (souvent la version principale)
+      const releaseId = data.releases[0].id;
+      const RELEASE_DETAIL_URL = `https://musicbrainz.org/ws/2/release/${releaseId}?inc=recordings&fmt=json`;
+
+      return fetch(RELEASE_DETAIL_URL, { headers: { 'User-Agent': 'projet_git/1.0.0 (tcollignon.74@gmail.com)' } });
+    })
+    .then(response => response.json())
+    .then(releaseData => {
+      const title = releaseData.title || "Album inconnu";
+
+      // Extraction des pistes dans l’ordre :
+      const tracks = [];
+      if (releaseData.media && releaseData.media.length > 0) {
+        releaseData.media.forEach(medium => {
+          medium.tracks.forEach(track => {
+            tracks.push({
+              position: track.position,
+              title: track.title,
+              length: track.length ? Math.floor(track.length / 1000) + ' sec' : 'Durée inconnue'
+            });
+          });
+        });
+      }
+
+      // Tri des pistes par position au cas où
+      tracks.sort((a, b) => a.position - b.position);
+
+      res.render('album', { title, tracks });
+    })
+    .catch(error => {
+      console.error('Erreur lors de la récupération des musiques :', error);
+      res.status(500).send('Erreur serveur');
+    });
+});
+
 
 module.exports = router;
