@@ -1,0 +1,8 @@
+extends layout
+
+block content
+  h1= title
+  ul
+    each album in albums
+      li= album.title
+    a(href='/') Retour à l'accueil
